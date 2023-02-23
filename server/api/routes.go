@@ -6,5 +6,6 @@ import (
 )
 
 func NewMemeRouter(router *echo.Group, service *meme.MemeService) {
+	router.POST("/meme", service.GenerateMemeByText)
 	router.GET("/meme/:id", service.GetMemeByID)
 }
