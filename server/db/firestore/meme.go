@@ -26,6 +26,10 @@ func (db *memeDB) GetByID(ctx context.Context, id string) (*meme.SerializableMem
 	}
 
 	var meme meme.SerializableMeme
-	dnsap.DataTo(&meme)
+	err = dnsap.DataTo(&meme)
+
+	if err != nil {
+		return nil, err
+	}
 	return &meme, nil
 }
