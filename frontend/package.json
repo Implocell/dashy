@@ -1,20 +1,23 @@
 {
-	"name": "frontend",
-	"type": "module",
-	"version": "0.0.1",
-	"scripts": {
-		"dev": "astro dev",
-		"start": "astro dev",
-		"build": "astro build",
-		"preview": "astro preview",
-		"astro": "astro"
-	},
-	"dependencies": {
-		"@astrojs/solid-js": "^2.0.2",
-		"astro": "^2.0.14",
-		"solid-js": "^1.6.11"
-	},
-	"devDependencies": {
-		"sass": "^1.58.3"
-	}
+  "name": "vite-template-solid",
+  "version": "0.0.0",
+  "description": "",
+  "scripts": {
+    "start": "vite",
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^4.9.5",
+    "vite": "^4.1.4",
+    "vite-plugin-solid": "^2.5.0"
+  },
+  "dependencies": {
+    "@suid/icons-material": "^0.5.9",
+    "@suid/material": "^0.10.2",
+    "@suid/vite-plugin": "^0.1.2",
+    "solid-js": "^1.6.10"
+  }
 }
