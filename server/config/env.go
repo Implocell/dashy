@@ -8,17 +8,9 @@ import (
 )
 
 func init() {
-	_, err := os.Stat("./env")
+	_, err := os.Stat("./.env")
 	if os.IsNotExist(err) {
-		env, err := godotenv.Unmarshal("AZURE_ORGANIZATION=ORGANIZATION")
-		if err != nil {
-			log.Fatal(err)
-		}
-		if err := godotenv.Write(env, "./.env"); err != nil {
-			log.Fatal(err)
-		}
-
-		return
+		log.Fatal(err)
 	}
 	err = godotenv.Load()
 	if err != nil {

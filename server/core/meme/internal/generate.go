@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 )
 
 // main entry point to generate meme?
@@ -68,7 +69,7 @@ func GenerateMemeByText(memeText string) error {
 		return err
 	}
 
-	bearer := fmt.Sprintf("Bearer %s", "")
+	bearer := fmt.Sprintf("Bearer %s", os.Getenv("OPEN_AI_API_KEY"))
 	req.Header.Add("Authorization", bearer)
 	req.Header.Add("content-type", "application/json")
 

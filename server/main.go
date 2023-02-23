@@ -8,7 +8,6 @@ import (
 	_ "github.com/implocell/dashy/config"
 	"github.com/implocell/dashy/core"
 	"github.com/implocell/dashy/firebase"
-
 	"github.com/labstack/echo/v4"
 )
 
