@@ -16,7 +16,7 @@ import (
 // grab the first picture and and save it to firebase
 // make an entry in the DB with the link from that saved picture and the text
 
-type OpenAiRequest struct {
+type DavinciRequest struct {
 	Model            string  `json:"model"`
 	Temperature      float64 `json:"temperature"`
 	MaxTokens        int     `json:"max_tokens"`
@@ -26,7 +26,7 @@ type OpenAiRequest struct {
 	Prompt           string  `json:"prompt"`
 }
 
-type OpenAiResponse struct {
+type DavinciResponse struct {
 	ID      string `json:"id"`
 	Object  string `json:"object"`
 	Created int    `json:"created"`
@@ -44,8 +44,21 @@ type OpenAiResponse struct {
 	} `json:"usage"`
 }
 
+type DaliRequest struct {
+	Prompt string `json:"promt"`
+	N      int    `json:"n"`
+	Size   string `json:"size"`
+}
+
+type DaliAiResponse struct {
+	Created int `json:"created"`
+	Data    []struct {
+		URL string `json:"url"`
+	} `json:"data"`
+}
+
 func GetPoem(memeText string) (string, error) {
-	r := OpenAiRequest{
+	r := DavinciRequest{
 		Model:            "text-davinci-003",
 		Temperature:      0.3,
 		MaxTokens:        800,
@@ -54,32 +67,35 @@ func GetPoem(memeText string) (string, error) {
 		PresencePenalty:  0,
 		Prompt:           fmt.Sprintf("Translate the following to english from norwegian and create a poem based on the translated text: %s", memeText),
 	}
-	res, err := sendOpenAiRequest(&r)
+	res, err := sendDavinciOpenAiRequest(&r, "https://api.openai.com/v1/completions")
 	if err != nil {
-		return "", nil
+		return "", err
 	}
+	fmt.Printf("\nres: %v", res)
 	return res.Choices[0].Text, nil
 }
 
 func GetImageFromPoem(poemText string) (string, error) {
-	r := OpenAiRequest{
-		Model:            "text-davinci-003",
-		Temperature:      0.3,
-		MaxTokens:        800,
-		TopP:             1,
-		FrequencyPenalty: 0,
-		PresencePenalty:  0,
-		Prompt:           fmt.Sprintf("Translate the following to english from norwegian and create a poem based on the translated text: %s", poemText),
+	r := DaliRequest{
+		Size:   "256x256",
+		N:      1,
+		Prompt: poemText,
 	}
-	res, err := sendOpenAiRequest(&r)
+	res, err := sendDaliOpenAiRequest(&r, "https://api.openai.com/v1/images/generations")
 	if err != nil {
-		return "", nil
+		return "", err
 	}
-	return res.Choices[0].Text, nil
+	return res.Data[0].URL, nil
 }
 
-func sendOpenAiRequest(openAiRequest *OpenAiRequest) (*OpenAiResponse, error) {
-	req, err := createBufferFromRequest(openAiRequest)
+func sendDavinciOpenAiRequest(openAiRequest *DavinciRequest, url string) (*DavinciResponse, error) {
+	openAiJson, err := json.Marshal(openAiRequest)
+	if err != nil {
+		return nil, err
+	}
+	buff := bytes.NewBuffer(openAiJson)
+
+	req, err := http.NewRequest("POST", url, buff)
 	if err != nil {
 		return nil, err
 	}
@@ -89,23 +105,37 @@ func sendOpenAiRequest(openAiRequest *OpenAiRequest) (*OpenAiResponse, error) {
 		return nil, err
 	}
 
-	return openAiResponse, nil
+	davinciResponse, err := mapRequestToDavinciResponse(openAiResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return davinciResponse, nil
 }
 
-func createBufferFromRequest(request *OpenAiRequest) (*http.Request, error) {
-	openAiJson, err := json.Marshal(request)
+func sendDaliOpenAiRequest(openAiRequest *DaliRequest, url string) (*DaliAiResponse, error) {
+	openAiJson, err := json.Marshal(openAiRequest)
 	if err != nil {
 		return nil, err
 	}
 	buff := bytes.NewBuffer(openAiJson)
 
-	url := "https://api.openai.com/v1/completions"
 	req, err := http.NewRequest("POST", url, buff)
 	if err != nil {
 		return nil, err
 	}
+	setOpenAiRequestHeaders(req)
+	openAiResponse, err := sendRequest(req)
+	if err != nil {
+		return nil, err
+	}
 
-	return req, nil
+	daliResponse, err := mapRequestToDaliResponse(openAiResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return daliResponse, nil
 }
 
 func setOpenAiRequestHeaders(req *http.Request) error {
@@ -116,7 +146,7 @@ func setOpenAiRequestHeaders(req *http.Request) error {
 	return nil
 }
 
-func sendRequest(req *http.Request) (*OpenAiResponse, error) {
+func sendRequest(req *http.Request) ([]byte, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -125,14 +155,28 @@ func sendRequest(req *http.Request) (*OpenAiResponse, error) {
 	}
 	defer resp.Body.Close()
 
+	fmt.Printf("\nresp: %v\n", resp)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(string(body))
 
-	var res OpenAiResponse
-	err = json.Unmarshal(body, &res)
+	fmt.Printf("\nbody: %v\n", body)
+	return body, nil
+}
+
+func mapRequestToDavinciResponse(body []byte) (*DavinciResponse, error) {
+	var res DavinciResponse
+	err := json.Unmarshal(body, &res)
+	if err != nil {
+		return nil, err
+	}
+	return &res, nil
+
+}
+func mapRequestToDaliResponse(body []byte) (*DaliAiResponse, error) {
+	var res DaliAiResponse
+	err := json.Unmarshal(body, &res)
 	if err != nil {
 		return nil, err
 	}

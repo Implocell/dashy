@@ -54,13 +54,15 @@ func (s *MemeService) GenerateMemeByText(c echo.Context) error {
 	fmt.Printf("Got meme text %s", memeRequest.Text)
 	englishPoem, err := internal.GetPoem(memeRequest.Text)
 	if err != nil {
-		return nil
+		return err
 	}
+	fmt.Println(englishPoem)
 
-	// img, err := internal.GetImageFromPoem(englishPoem)
-	// if err != nil {
-	// 	return nil
-	// }
+	imgUrl, err := internal.GetImageFromPoem(englishPoem)
+	if err != nil {
+		return err
+	}
+	fmt.Println(imgUrl)
 
-	return c.JSON(200, englishPoem)
+	return c.JSON(200, imgUrl)
 }
