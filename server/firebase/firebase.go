@@ -6,6 +6,7 @@ import (
 
 	"cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go"
+	"firebase.google.com/go/storage"
 
 	"google.golang.org/api/option"
 )
@@ -13,6 +14,7 @@ import (
 type FirebaseContext struct {
 	App       *firebase.App
 	Firestore *firestore.Client
+	Storage   *storage.Client
 }
 
 func InitAndReturnApp() (*FirebaseContext, error) {
@@ -28,8 +30,15 @@ func InitAndReturnApp() (*FirebaseContext, error) {
 		return nil, fmt.Errorf("error initializing firestore: %v", err)
 	}
 
+	storage, err := app.Storage(ctx)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to initalize firebase storage: %v", err)
+	}
+
 	return &FirebaseContext{
 		App:       app,
 		Firestore: firestore,
+		Storage:   storage,
 	}, nil
 }

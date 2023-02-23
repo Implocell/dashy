@@ -33,3 +33,8 @@ func (db *memeDB) GetByID(ctx context.Context, id string) (*meme.SerializableMem
 	}
 	return &meme, nil
 }
+
+func (db *memeDB) Create(ctx context.Context, item *meme.SerializableMeme) error {
+	_, _, err := db.db.Collection(db.collection).Add(ctx, item)
+	return err
+}

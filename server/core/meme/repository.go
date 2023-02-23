@@ -8,6 +8,7 @@ import (
 
 type MemeRepository interface {
 	GetByID(ctx context.Context, id string) (*SerializableMeme, error)
+	Create(ctx context.Context, meme *SerializableMeme) error
 }
 
 type MemeDatabaseService struct {
@@ -27,4 +28,12 @@ func (m *MemeDatabaseService) GetByID(ctx context.Context, id string) (*Serializ
 	}
 
 	return &meme, nil
+}
+
+func (m *MemeDatabaseService) Create(ctx context.Context, meme *SerializableMeme) error {
+	if err := m.db.Create(ctx, meme); err != nil {
+		return err
+	}
+
+	return nil
 }

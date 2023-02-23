@@ -18,6 +18,24 @@ type Meme struct {
 	Origin      Origin
 }
 
+func NewMeme(url, text string, origin Origin) Meme {
+	return Meme{
+		Url:         url,
+		DateCreated: time.Now(),
+		Text:        text,
+		Origin:      origin,
+	}
+}
+
+func (m Meme) AsSerializable() SerializableMeme {
+	return SerializableMeme{
+		Url:         m.Url,
+		DateCreated: int(m.DateCreated.Unix()),
+		Text:        m.Text,
+		Origin:      m.Origin,
+	}
+}
+
 type SerializableMeme struct {
 	Url         string `json:"url" firestore:"url,omitempty"`
 	DateCreated int    `json:"dateCreated" firestore:"dateCreated,omitempty"`
