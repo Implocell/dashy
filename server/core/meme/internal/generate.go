@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 )
@@ -45,7 +44,7 @@ type OpenAiResponse struct {
 	} `json:"usage"`
 }
 
-func GenerateMemeByText(memeText string) error {
+func GetPoem(memeText string) (string, error) {
 	r := OpenAiRequest{
 		Model:            "text-davinci-003",
 		Temperature:      0.3,
@@ -55,56 +54,87 @@ func GenerateMemeByText(memeText string) error {
 		PresencePenalty:  0,
 		Prompt:           fmt.Sprintf("Translate the following to english from norwegian and create a poem based on the translated text: %s", memeText),
 	}
-
-	json, err := json.Marshal(&r)
+	res, err := sendOpenAiRequest(&r)
 	if err != nil {
-		return err
+		return "", nil
+	}
+	return res.Choices[0].Text, nil
+}
+
+func GetImageFromPoem(poemText string) (string, error) {
+	r := OpenAiRequest{
+		Model:            "text-davinci-003",
+		Temperature:      0.3,
+		MaxTokens:        800,
+		TopP:             1,
+		FrequencyPenalty: 0,
+		PresencePenalty:  0,
+		Prompt:           fmt.Sprintf("Translate the following to english from norwegian and create a poem based on the translated text: %s", poemText),
+	}
+	res, err := sendOpenAiRequest(&r)
+	if err != nil {
+		return "", nil
+	}
+	return res.Choices[0].Text, nil
+}
+
+func sendOpenAiRequest(openAiRequest *OpenAiRequest) (*OpenAiResponse, error) {
+	req, err := createBufferFromRequest(openAiRequest)
+	if err != nil {
+		return nil, err
+	}
+	setOpenAiRequestHeaders(req)
+	openAiResponse, err := sendRequest(req)
+	if err != nil {
+		return nil, err
 	}
 
-	buff := bytes.NewBuffer(json)
+	return openAiResponse, nil
+}
+
+func createBufferFromRequest(request *OpenAiRequest) (*http.Request, error) {
+	openAiJson, err := json.Marshal(request)
+	if err != nil {
+		return nil, err
+	}
+	buff := bytes.NewBuffer(openAiJson)
 
 	url := "https://api.openai.com/v1/completions"
 	req, err := http.NewRequest("POST", url, buff)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
+	return req, nil
+}
+
+func setOpenAiRequestHeaders(req *http.Request) error {
 	bearer := fmt.Sprintf("Bearer %s", os.Getenv("OPEN_AI_API_KEY"))
 	req.Header.Add("Authorization", bearer)
 	req.Header.Add("content-type", "application/json")
 
+	return nil
+}
+
+func sendRequest(req *http.Request) (*OpenAiResponse, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Printf("Error on response.\n[ERROR] - %s", err)
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return nil, err
 	}
+	fmt.Println(string(body))
 
-	log.Printf("Got text from AI: %s", body)
-	return nil
+	var res OpenAiResponse
+	err = json.Unmarshal(body, &res)
+	if err != nil {
+		return nil, err
+	}
+	return &res, nil
 }
-
-// url := "https://api.globalcode.com.br/v1/publico/eventos"
-
-// // Create a Bearer string by appending string access token
-// var bearer = "Bearer " + <ACCESS TOKEN HERE>
-
-// // Create a new request using http
-// req, err := http.NewRequest("GET", url, nil)
-
-// // add authorization header to the req
-// req.Header.Add("Authorization", bearer)
-
-// // Send req using http Client
-// client := &http.Client{}
-// resp, err := client.Do(req)
-// if err != nil {
-//     log.Println("Error on response.\n[ERROR] -", err)
-// }
-// defer resp.Body.Close()

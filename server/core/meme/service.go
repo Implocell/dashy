@@ -44,7 +44,7 @@ func (s *MemeService) GetMemeByID(c echo.Context) error {
 func (s *MemeService) GenerateMemeByText(c echo.Context) error {
 	_, cancelFunc := context.WithTimeout(c.Request().Context(), time.Minute*2)
 	defer cancelFunc()
-	
+
 	var memeRequest PostMemeRequest
 	err := json.NewDecoder(c.Request().Body).Decode(&memeRequest)
 	if err != nil {
@@ -52,7 +52,15 @@ func (s *MemeService) GenerateMemeByText(c echo.Context) error {
 	}
 
 	fmt.Printf("Got meme text %s", memeRequest.Text)
-	internal.GenerateMemeByText(memeRequest.Text)
-	return nil
-}
+	englishPoem, err := internal.GetPoem(memeRequest.Text)
+	if err != nil {
+		return nil
+	}
 
+	// img, err := internal.GetImageFromPoem(englishPoem)
+	// if err != nil {
+	// 	return nil
+	// }
+
+	return c.JSON(200, englishPoem)
+}
