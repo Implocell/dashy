@@ -9,8 +9,6 @@ import { theme } from "./theme";
 import { MemeCard } from "./components/MemeCard/MemeCard";
 
 const App: Component = () => {
-  getPoem("test");
-
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
