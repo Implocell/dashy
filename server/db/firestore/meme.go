@@ -34,6 +34,25 @@ func (db *memeDB) GetByID(ctx context.Context, id string) (*meme.SerializableMem
 	return &meme, nil
 }
 
+func (db *memeDB) GetAll(ctx context.Context) (*[]meme.SerializableMeme, error) {
+	docs, err := db.db.Collection(db.collection).OrderBy("dateCreated", firestore.Desc).Documents(ctx).GetAll()
+	if err != nil {
+		return nil, err
+	}
+
+	var memes []meme.SerializableMeme
+	for _, doc := range docs {
+		var meme meme.SerializableMeme
+		err = doc.DataTo(&meme)
+		if err != nil {
+			return nil, err
+		}
+		memes = append(memes, meme)
+	}
+
+	return &memes, nil
+}
+
 func (db *memeDB) Create(ctx context.Context, item *meme.SerializableMeme) error {
 	_, _, err := db.db.Collection(db.collection).Add(ctx, item)
 	return err
