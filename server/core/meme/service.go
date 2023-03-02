@@ -5,7 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"io"
+	"math/rand"
 	"net/http"
 	"time"
 
@@ -24,6 +25,11 @@ type PostMemeRequest struct {
 
 func NewMemeService(db MemeRepository, storage MemeStorage) *MemeService {
 	return &MemeService{db: db, storage: storage}
+}
+
+type UploadMemeRequest struct {
+	Url  string `json:"url"`
+	Name string `json:"name"`
 }
 
 func (s *MemeService) GetMemeByID(c echo.Context) error {
@@ -64,8 +70,13 @@ func (s *MemeService) GenerateMemeByText(c echo.Context) error {
 	if err != nil {
 		return err
 	}
+	id := randStringBytes(10)
+	localImgUrl, err := s.uploadMeme(ctx, imgUrl, id)
+	if err != nil {
+		return c.JSON(500, err.Error())
+	}
 
-	meme := NewMeme(imgUrl, englishPoem, Generated)
+	meme := NewMeme(localImgUrl, englishPoem, Generated)
 
 	serializableMeme := meme.AsSerializable()
 
@@ -73,24 +84,61 @@ func (s *MemeService) GenerateMemeByText(c echo.Context) error {
 		return c.JSON(500, err.Error())
 	}
 
-	res, err := http.Get(imgUrl)
+	return c.JSON(200, imgUrl)
+}
+
+func (s *MemeService) UploadMeme(c echo.Context) error {
+	ctx, cancelFunc := context.WithCancel(c.Request().Context())
+	defer cancelFunc()
+
+	var urlRequest UploadMemeRequest
+	err := json.NewDecoder(c.Request().Body).Decode(&urlRequest)
+	if err != nil {
+		return err
+	}
+
+	url, err := s.uploadMeme(ctx, urlRequest.Url, urlRequest.Name)
 	if err != nil {
 		return c.JSON(500, err.Error())
 	}
 
-	b := []byte{}
-	n, err := res.Body.Read(b)
+	return c.JSON(200, url)
+}
+
+func (s *MemeService) uploadMeme(ctx context.Context, url string, fileName string) (string, error) {
+
+	res, err := http.Get(url)
 	if err != nil {
-		c.JSON(500, err.Error())
+		return "", err
 	}
-	log.Printf("Got %d bytes from image", n)
+	defer res.Body.Close()
 
-	buf := bytes.NewBuffer(b)
+	buf := bytes.NewBuffer([]byte{})
 
-	err = s.storage.Upload(ctx, buf.Bytes())
+	_, err = io.Copy(buf, res.Body)
 	if err != nil {
-		c.JSON(500, err.Error())
+		return "", err
 	}
 
-	return c.JSON(200, imgUrl)
+	imageUrl, err := s.storage.Upload(ctx, buf, fileName)
+	if err != nil {
+		return "", err
+	}
+
+	return imageUrl, nil
+}
+
+func seed() {
+	rand.Seed(time.Now().UnixNano())
+}
+
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+func randStringBytes(n int) string {
+	seed()
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+	}
+	return string(b)
 }
