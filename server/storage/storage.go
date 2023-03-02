@@ -1,7 +1,10 @@
 package storage
 
-import "context"
+import (
+	"context"
+	"io"
+)
 
-type Storage[T any] interface {
-	Upload(ctx context.Context, obj T) error
+type Storage interface {
+	Upload(ctx context.Context, r io.Reader, fileName string) (string, error)
 }

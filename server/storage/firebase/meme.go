@@ -2,8 +2,11 @@ package firebase
 
 import (
 	"context"
-	"log"
+	"fmt"
+	"io"
+	"os"
 
+	gStorage "cloud.google.com/go/storage"
 	"firebase.google.com/go/storage"
 )
 
@@ -17,19 +20,29 @@ func NewMemeStorage(storage *storage.Client) memeStorage {
 	}
 }
 
-func (s memeStorage) Upload(ctx context.Context, obj []byte) error {
-	handler, err := s.storage.DefaultBucket()
+func (s memeStorage) Upload(ctx context.Context, r io.Reader, fileName string) (string, error) {
+	handler, err := s.storage.Bucket(os.Getenv("FIREBASE_BUCKET_MEME"))
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	writer := handler.Object("something").NewWriter(ctx)
-	n, err := writer.Write(obj)
+	o := handler.Object(fmt.Sprintf("memes/%s", fileName))
+	writer := o.NewWriter(ctx)
+
+	_, err = io.Copy(writer, r)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	log.Printf("written %d bytes", n)
+	if err := writer.Close(); err != nil {
+		return "", err
+	}
 
-	return nil
+	if err := o.ACL().Set(ctx, gStorage.AllUsers, gStorage.RoleReader); err != nil {
+		return "", err
+	}
+
+	previewLink := "https://firebasestorage.googleapis.com/v0/b/dashy-9a477.appspot.com/o/memes%2F" + fmt.Sprintf("%s?alt=media", fileName)
+
+	return previewLink, nil
 }
