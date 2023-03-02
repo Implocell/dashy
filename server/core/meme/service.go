@@ -96,7 +96,7 @@ func (s *MemeService) GenerateMemeByText(c echo.Context) error {
 		return c.JSON(500, err.Error())
 	}
 
-	return c.JSON(200, imgUrl)
+	return c.JSON(200, localImgUrl)
 }
 
 func (s *MemeService) UploadMeme(c echo.Context) error {

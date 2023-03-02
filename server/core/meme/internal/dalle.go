@@ -17,7 +17,7 @@ func NewDallERequest(prompt string) *DallERequest {
 	return &DallERequest{
 		Size:   "256x256",
 		N:      1,
-		Prompt: prompt,
+		Prompt: "make the following prompt cartoonish and resemble a meme: " + prompt,
 	}
 }
 
