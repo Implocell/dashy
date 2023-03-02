@@ -51,6 +51,18 @@ func (s *MemeService) GetMemeByID(c echo.Context) error {
 	return c.JSON(200, memeSerializable)
 }
 
+func (s *MemeService) GetMemes(c echo.Context) error {
+	ctx, cancelFunc := context.WithCancel(c.Request().Context())
+	defer cancelFunc()
+
+	serializableMemes, err := s.db.GetAll(ctx)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(200, serializableMemes)
+}
+
 func (s *MemeService) GenerateMemeByText(c echo.Context) error {
 	ctx, cancelFunc := context.WithTimeout(c.Request().Context(), time.Minute*2)
 	defer cancelFunc()
