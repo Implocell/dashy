@@ -4,3 +4,4 @@ export const getPoem = async (text: string) => {
     body: JSON.stringify({ text: "Some text" }),
   }).then((res) => res.json());
 };
+
