@@ -19,9 +19,12 @@ const MemeInputEndAdornment = (props: MemeInputEndAdornmentProps) => {
 export const MemeInput = () => {
 	const { memeText } = useMemeExampleText();
 	const [isLoading, setIsLoading] = createSignal(false);
+	const [input, setInput] = createSignal('');
 
 	const onSubmit = () => {
-		setIsLoading(true);
+		if (input().length > 0) {
+			setIsLoading(true);
+		}
 	};
 
 	const onKeyDown = (event: KeyboardEvent) => {
@@ -37,6 +40,8 @@ export const MemeInput = () => {
 					size="small"
 					placeholder="Insert meme here!"
 					disabled={isLoading()}
+					value={input()}
+					onChange={(e) => setInput(e.target.value)}
 					InputProps={{
 						onKeyDown: onKeyDown,
 						endAdornment: <MemeInputEndAdornment isLoading={isLoading()} onSubmit={onSubmit} />,
