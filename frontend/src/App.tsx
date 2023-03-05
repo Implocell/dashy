@@ -1,22 +1,21 @@
-import type { Component } from "solid-js";
+import type { Component } from 'solid-js';
 
-import logo from "./logo.svg";
-import styles from "./App.module.css";
-import { getPoem } from "./api/getPoem";
-import Card from "@suid/material/Card";
-import { CssBaseline, ThemeProvider } from "@suid/material";
-import { theme } from "./theme";
-import { MemeCard } from "./components/MemeCard/MemeCard";
+import { CssBaseline, ThemeProvider } from '@suid/material';
+import { theme } from './theme';
+import { Route, Router, Routes } from '@solidjs/router';
+import { Home } from './pages/Home';
 
 const App: Component = () => {
-  return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <main class={styles["main"]}>
-        <MemeCard />
-      </main>
-    </ThemeProvider>
-  );
+	return (
+		<Router>
+			<ThemeProvider theme={theme}>
+				<CssBaseline />
+				<Routes>
+					<Route path="/" component={Home} />
+				</Routes>
+			</ThemeProvider>
+		</Router>
+	);
 };
 
 export default App;
