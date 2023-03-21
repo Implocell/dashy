@@ -1,0 +1,1 @@
+export {MemeCard} from './MemeCard'
